@@ -1,0 +1,5 @@
+node_modules/
+*.log
+bitrix24_companies_*.json
+.env
+.DS_Store
