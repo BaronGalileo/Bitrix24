@@ -1,21 +1,19 @@
 const axios = require('axios');
 
-class Bitrix24CompaniesFetcher {
+class Bitrix24 {
     constructor(webhookUrl) {
-        // Проверяем и форматируем URL вебхука
         this.webhookUrl = webhookUrl.trim();
         if (!this.webhookUrl.startsWith('https://')) {
             throw new Error('Webhook URL должен начинаться с https://');
         }
-        
-        // Убедимся, что URL заканчивается на / если нужно
+
         if (!this.webhookUrl.endsWith('/')) {
             this.webhookUrl += '/';
         }
         
         this.apiClient = axios.create({
             baseURL: this.webhookUrl,
-            timeout: 30000, // 30 секунд таймаут
+            timeout: 30000,
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -26,16 +24,13 @@ class Bitrix24CompaniesFetcher {
         this.totalFetched = 0;
     }
 
-    /**
-     * Получает компании с пагинацией
-     */
     async fetchCompanies(totalNeeded = 10000) {
         console.log(`Начинаем загрузку компаний из Bitrix24...`);
         console.log(`Цель: ${totalNeeded} компаний`);
         console.log(`Webhook: ${this.webhookUrl}`);
         console.log('=' .repeat(50));
 
-        const batchSize = 50; // Bitrix24 позволяет до 50 записей за раз
+        const batchSize = 50; 
         let start = 0;
         
         try {
@@ -77,26 +72,24 @@ class Bitrix24CompaniesFetcher {
                 this.totalFetched += companiesBatch.length;
                 
                 console.log(`Загружено: ${this.totalFetched} компаний`);
-                
-                // Если получили меньше запрошенного, значит это последняя страница
+    
                 if (companiesBatch.length < batchSize) {
                     break;
                 }
                 
                 start += batchSize;
-                
-                // Небольшая задержка чтобы не перегружать API
+       
                 await this.sleep(200);
             }
 
             console.log('=' .repeat(50));
-            console.log(`✅ Загрузка завершена!`);
+            console.log(`Загрузка завершена!`);
             console.log(`Всего загружено компаний: ${this.totalFetched}`);
             
             return this.companies;
 
         } catch (error) {
-            console.error('❌ Ошибка при загрузке компаний:');
+            console.error('Ошибка при загрузке компаний:');
             
             if (error.response) {
                 console.error(`Status: ${error.response.status}`);
@@ -116,9 +109,6 @@ class Bitrix24CompaniesFetcher {
         }
     }
 
-    /**
-     * Выводит компании в читаемом формате
-     */
     displayCompanies(limit = 10) {
         console.log('\n' + '=' .repeat(80));
         console.log('СПИСОК КОМПАНИЙ');
@@ -128,8 +118,7 @@ class Bitrix24CompaniesFetcher {
             console.log('Нет данных о компаниях');
             return;
         }
-        
-        // Выводим первые N компаний для предпросмотра
+
         const previewLimit = Math.min(limit, this.companies.length);
         
         console.log(`\nПервые ${previewLimit} компаний (всего: ${this.companies.length}):\n`);
@@ -155,12 +144,10 @@ class Bitrix24CompaniesFetcher {
             console.log('-'.repeat(80));
         });
         
-        // Статистика
         console.log('\n' + '=' .repeat(80));
         console.log('СТАТИСТИКА:');
         console.log('=' .repeat(80));
         
-        // Типы компаний
         const typeStats = {};
         const industryStats = {};
         
@@ -186,14 +173,10 @@ class Bitrix24CompaniesFetcher {
             .forEach(([industry, count]) => {
                 console.log(`  ${industry}: ${count}`);
             });
-        
-        // Экспорт в файл
+
         this.exportToFile();
     }
 
-    /**
-     * Экспортирует данные в JSON файл
-     */
     exportToFile() {
         const fs = require('fs');
         const filename = `bitrix24_companies_${new Date().toISOString().split('T')[0]}.json`;
@@ -209,22 +192,15 @@ class Bitrix24CompaniesFetcher {
         };
         
         fs.writeFileSync(filename, JSON.stringify(exportData, null, 2), 'utf8');
-        console.log(`\n📁 Данные сохранены в файл: ${filename}`);
+        console.log(`\n Данные сохранены в файл: ${filename}`);
     }
 
-    /**
-     * Вспомогательная функция для задержки
-     */
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 
-/**
- * Основная функция
- */
 async function main() {
-    // Получаем вебхук из аргументов командной строки или переменной окружения
     let webhookUrl = process.argv[2] || process.env.BITRIX24_WEBHOOK;
     
     if (!webhookUrl) {
@@ -240,13 +216,10 @@ async function main() {
     }
     
     try {
-        // Создаем экземпляр класса
-        const fetcher = new Bitrix24CompaniesFetcher(webhookUrl);
+        const fetcher = new Bitrix24(webhookUrl);
         
-        // Загружаем компании (можно указать меньшее количество для теста)
         await fetcher.fetchCompanies(10000);
         
-        // Выводим результат
         fetcher.displayCompanies(15);
         
     } catch (error) {
@@ -255,10 +228,10 @@ async function main() {
     }
 }
 
-// Запускаем основную функцию
 if (require.main === module) {
     main();
 }
 
-// Экспортируем класс для использования в других модулях
-module.exports = Bitrix24CompaniesFetcher;
+module.exports = Bitrix24;
+
+
