@@ -16,3 +16,6 @@ cd bitrix24
 
 # Установите зависимости
 npm install
+
+#  В терминале написать 
+node index.js <ваш вебхук Bitrix24>
